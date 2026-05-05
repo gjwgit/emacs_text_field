@@ -1,6 +1,6 @@
 /// EmacsTextField — a multiline text field with common Emacs key bindings.
 ///
-// Time-stamp: <Tuesday 2026-05-06 09:00:00 +1000 Graham Williams>
+// Time-stamp: <Tuesday 2026-05-05 15:12:30 +1000 Graham Williams>
 ///
 /// Copyright (C) 2026, Togaware Pty Ltd
 ///
@@ -145,7 +145,6 @@ class _EmacsTextFieldState extends State<EmacsTextField> {
   }
 
   int _prevLine(int at) {
-    final text = _ctrl.text;
     final start = _lineStart(at);
     if (start == 0) return 0;
     final prevEnd = start - 1;
@@ -223,11 +222,11 @@ class _EmacsTextFieldState extends State<EmacsTextField> {
     if (_chordPrefix != null) {
       final prefix = _chordPrefix!;
       _chordPrefix = null;
-      if (prefix == 'C-c' && !ctrl && !alt &&
-          key == LogicalKeyboardKey.keyD) {
+      if (prefix == 'C-c' && !ctrl && !alt && key == LogicalKeyboardKey.keyD) {
         // C-c d — insert today as yyyymmdd.
         final now = DateTime.now();
-        final stamp = '${now.year}'
+        final stamp =
+            '${now.year}'
             '${now.month.toString().padLeft(2, '0')}'
             '${now.day.toString().padLeft(2, '0')}';
         final o = _offset;
@@ -334,9 +333,7 @@ class _EmacsTextFieldState extends State<EmacsTextField> {
           final o = _offset;
           _ctrl.value = _ctrl.value.copyWith(
             text: _ctrl.text.replaceRange(o, o, insertion),
-            selection: TextSelection.collapsed(
-              offset: o + insertion.length,
-            ),
+            selection: TextSelection.collapsed(offset: o + insertion.length),
           );
           return KeyEventResult.handled;
 
