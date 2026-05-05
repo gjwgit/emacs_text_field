@@ -1,0 +1,17 @@
+name: emacs_text_field_example
+description: Example app demonstrating EmacsTextField.
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.11.5
+  flutter: ">=3.27.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  emacs_text_field:
+    path: ../
+
+flutter:
+  uses-material-design: true

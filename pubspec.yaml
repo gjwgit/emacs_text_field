@@ -1,0 +1,22 @@
+name: emacs_text_field
+description: >-
+  A Flutter TextField widget with common Emacs key bindings for movement,
+  killing, yanking, and chord sequences. Suitable for desktop and tablet
+  applications where keyboard-centric editing is preferred.
+version: 0.1.0
+homepage: https://github.com/gjwgit/emacs_text_field
+
+environment:
+  sdk: ^3.11.5
+  flutter: ">=3.27.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
