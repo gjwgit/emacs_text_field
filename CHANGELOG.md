@@ -1,4 +1,4 @@
-# A Text Field wdiget with a selection of Emacs keyboard commands.
+# A Text Field Widget with Emacs Keyboard Commands
 
 Noted here are the high level changes for the package.
 
@@ -13,8 +13,8 @@ The package is available from
 Coding documentation is available from [solid community
 au](https://solidcommunity.au/docs/solidui)
 
-# 0.2.0 Stabilize
+## 0.2.0 Stabilize
 
-# 0.1.0 Initial release
+## 0.1.0 Initial release
 
 + Initial release to [pub.dev](https://pub.dev) [0.1.0 gjw]

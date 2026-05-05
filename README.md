@@ -9,7 +9,7 @@ where keyboard-centric editing is preferred.
 - All standard Emacs movement commands
 - Kill ring (single-entry): `C-k`, `C-w`, `C-y`
 - Word operations: `M-f`, `M-b`, `M-d`, `M-Backspace`
-- Line bullet helper: `M-Enter` inserts `\n+ `
+- Line bullet helper: `M-Enter` inserts `\n+`
 - Chord sequences: `C-c d` inserts today as `yyyymmdd`
 - `expands` mode for use inside `Expanded` widgets
 - `minLines` for fixed minimum height
@@ -62,6 +62,7 @@ Expanded(
 ## Key Bindings
 
 ### Movement
+
 | Key | Action |
 |-----|--------|
 | `C-a` | Beginning of line |
@@ -74,6 +75,7 @@ Expanded(
 | `M-b` | Backward word |
 
 ### Editing
+
 | Key | Action |
 |-----|--------|
 | `C-d` | Delete char forward |
@@ -82,15 +84,17 @@ Expanded(
 | `C-k` | Kill to end of line |
 | `C-w` | Kill selection |
 | `C-y` | Yank (paste kill ring) |
-| `M-Enter` | Insert `\n+ ` (new bullet) |
+| `M-Enter` | Insert `\n+` (new bullet) |
 | `C-g` | Cancel / deselect |
 
 ### Chords
+
 | Sequence | Action |
 |----------|--------|
 | `C-c d` | Insert today as `yyyymmdd` |
 
 ### Undo
+
 `C-z` and `C-/` are passed through to Flutter's native undo handler.
 
 ## License
