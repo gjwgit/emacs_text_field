@@ -31,15 +31,29 @@
 /// ### Chord sequences
 /// - `C-c d` insert today as `yyyymmdd`
 ///
+/// ### Linux primary selection (X11)
+/// Highlighting text automatically writes to the X11 primary buffer.
+/// Selected text can then be pasted into other Linux apps with middle-click.
+/// `C-v` pastes from the primary selection buffer (i.e. whatever is currently
+/// highlighted anywhere on screen) rather than the system clipboard.
+///
 /// ### Undo
 /// `C-z` and `C-/` are passed through to Flutter's built-in undo handler.
 
 library;
 
+import 'dart:io' show Platform, Process, ProcessResult;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:emacs_text_field/src/primary_selection.dart';
+
 /// A multiline [TextField] with Emacs-style key bindings.
+///
+/// On Linux, selected text is automatically written to the X11 primary
+/// selection buffer so that it can be pasted into other applications with
+/// the middle mouse button. Note that middle-click paste *into* this widget
+/// is not supported by the Flutter engine at this time.
 ///
 /// Usage:
 /// ```dart
@@ -103,7 +117,31 @@ class _EmacsTextFieldState extends State<EmacsTextField> {
   // Chord prefix for multi-key bindings (e.g. C-c → prefix for C-c d).
   String? _chordPrefix;
 
+  // Cleanup callback returned by attachPrimarySelection.
+  late VoidCallback _removePrimary;
+
   TextEditingController get _ctrl => widget.controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _removePrimary = attachPrimarySelection(_ctrl);
+  }
+
+  @override
+  void didUpdateWidget(EmacsTextField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      _removePrimary();
+      _removePrimary = attachPrimarySelection(widget.controller);
+    }
+  }
+
+  @override
+  void dispose() {
+    _removePrimary();
+    super.dispose();
+  }
 
   // ── Cursor helpers ─────────────────────────────────────────────────────────
 
@@ -221,7 +259,43 @@ class _EmacsTextFieldState extends State<EmacsTextField> {
     );
   }
 
-  // ── Key event handler ──────────────────────────────────────────────────────
+  /// Reads from the X11 primary selection buffer (via xclip or xsel) and
+  /// inserts the text at the current cursor position.
+  Future<void> _pasteFromPrimary() async {
+    String text = '';
+    try {
+      final result = await Process.run(
+        'xclip',
+        ['-selection', 'primary', '-o'],
+      ).timeout(const Duration(milliseconds: 300),
+          onTimeout: () => ProcessResult(-1, 1, '', ''));
+      if (result.exitCode == 0) text = result.stdout as String;
+    } catch (_) {}
+
+    if (text.isEmpty) {
+      try {
+        final result = await Process.run(
+          'xsel',
+          ['--primary', '--output'],
+        ).timeout(const Duration(milliseconds: 300),
+            onTimeout: () => ProcessResult(-1, 1, '', ''));
+        if (result.exitCode == 0) text = result.stdout as String;
+      } catch (_) {}
+    }
+
+    if (text.isEmpty) return;
+    final o = _offset;
+    final sel = _ctrl.selection;
+    // Replace selection if one exists, otherwise insert at cursor.
+    final start = sel.isCollapsed ? o : sel.start;
+    final end = sel.isCollapsed ? o : sel.end;
+    _ctrl.value = _ctrl.value.copyWith(
+      text: _ctrl.text.replaceRange(start, end, text),
+      selection: TextSelection.collapsed(offset: start + text.length),
+    );
+  }
+
+
 
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is KeyUpEvent) return KeyEventResult.ignored;
@@ -308,6 +382,17 @@ class _EmacsTextFieldState extends State<EmacsTextField> {
         case LogicalKeyboardKey.keyW:
           _killSelection();
           return KeyEventResult.handled;
+
+        case LogicalKeyboardKey.keyV:
+          // On Linux, Ctrl-V pastes from the X11 primary selection buffer
+          // (i.e. whatever is currently highlighted anywhere on screen),
+          // rather than the system clipboard. On other platforms fall through
+          // to Flutter's default Ctrl-V behaviour.
+          if (Platform.isLinux) {
+            _pasteFromPrimary();
+            return KeyEventResult.handled;
+          }
+          return KeyEventResult.ignored;
 
         case LogicalKeyboardKey.keyG:
           _moveTo(_offset);

@@ -34,3 +34,4 @@
 library emacs_text_field;
 
 export 'src/emacs_text_field.dart';
+export 'src/primary_selection.dart';
