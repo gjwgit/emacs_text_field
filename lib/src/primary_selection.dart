@@ -46,8 +46,10 @@ Future<void> writePrimarySelection(String text) async {
     final xclip = await Process.start('xclip', ['-selection', 'primary']);
     xclip.stdin.write(text);
     await xclip.stdin.close();
-    final exit = await xclip.exitCode
-        .timeout(const Duration(milliseconds: 300), onTimeout: () => 1);
+    final exit = await xclip.exitCode.timeout(
+      const Duration(milliseconds: 300),
+      onTimeout: () => 1,
+    );
     if (exit == 0) return;
   } catch (_) {}
 
@@ -55,7 +57,9 @@ Future<void> writePrimarySelection(String text) async {
     final xsel = await Process.start('xsel', ['--primary', '--input']);
     xsel.stdin.write(text);
     await xsel.stdin.close();
-    await xsel.exitCode
-        .timeout(const Duration(milliseconds: 300), onTimeout: () => 1);
+    await xsel.exitCode.timeout(
+      const Duration(milliseconds: 300),
+      onTimeout: () => 1,
+    );
   } catch (_) {}
 }

@@ -15,6 +15,8 @@ au](https://solidcommunity.au/docs/solidui)
 
 ## 0.2.0 Stabilize
 
++ Support primary seleciton on Linux [0.1.1 20260514 gjw]
+
 ## 0.1.0 Initial release
 
-+ Initial release to [pub.dev](https://pub.dev) [0.1.0 gjw]
++ Initial release to [pub.dev](https://pub.dev) [0.1.0 20260501 gjw]

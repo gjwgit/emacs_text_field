@@ -43,6 +43,7 @@
 library;
 
 import 'dart:io' show Platform, Process, ProcessResult;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -264,21 +265,21 @@ class _EmacsTextFieldState extends State<EmacsTextField> {
   Future<void> _pasteFromPrimary() async {
     String text = '';
     try {
-      final result = await Process.run(
-        'xclip',
-        ['-selection', 'primary', '-o'],
-      ).timeout(const Duration(milliseconds: 300),
-          onTimeout: () => ProcessResult(-1, 1, '', ''));
+      final result = await Process.run('xclip', ['-selection', 'primary', '-o'])
+          .timeout(
+            const Duration(milliseconds: 300),
+            onTimeout: () => ProcessResult(-1, 1, '', ''),
+          );
       if (result.exitCode == 0) text = result.stdout as String;
     } catch (_) {}
 
     if (text.isEmpty) {
       try {
-        final result = await Process.run(
-          'xsel',
-          ['--primary', '--output'],
-        ).timeout(const Duration(milliseconds: 300),
-            onTimeout: () => ProcessResult(-1, 1, '', ''));
+        final result = await Process.run('xsel', ['--primary', '--output'])
+            .timeout(
+              const Duration(milliseconds: 300),
+              onTimeout: () => ProcessResult(-1, 1, '', ''),
+            );
         if (result.exitCode == 0) text = result.stdout as String;
       } catch (_) {}
     }
@@ -294,8 +295,6 @@ class _EmacsTextFieldState extends State<EmacsTextField> {
       selection: TextSelection.collapsed(offset: start + text.length),
     );
   }
-
-
 
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is KeyUpEvent) return KeyEventResult.ignored;
