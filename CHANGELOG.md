@@ -15,6 +15,7 @@ au](https://solidcommunity.au/docs/solidui)
 
 ## 0.2.0 Stabilize
 
++ Scrolling fixes within widget [0.1.2 20260515 gjw]
 + Support primary seleciton on Linux [0.1.1 20260514 gjw]
 
 ## 0.1.0 Initial release

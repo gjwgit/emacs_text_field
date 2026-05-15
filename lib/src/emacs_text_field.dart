@@ -82,6 +82,7 @@ class EmacsTextField extends StatefulWidget {
     this.autofocus = false,
     this.expands = false,
     this.minLines,
+    this.outerScrollController,
   });
 
   /// The text editing controller.
@@ -107,6 +108,11 @@ class EmacsTextField extends StatefulWidget {
   /// Minimum visible rows when [expands] is `false`. Defaults to `5`.
   final int? minLines;
 
+  /// Optional [ScrollController] of an outer [SingleChildScrollView].
+  /// When provided, [_nudgeScroll] scrolls this controller to keep the
+  /// cursor visible after newline insertion or yank operations.
+  final ScrollController? outerScrollController;
+
   @override
   State<EmacsTextField> createState() => _EmacsTextFieldState();
 }
@@ -117,6 +123,13 @@ class _EmacsTextFieldState extends State<EmacsTextField> {
 
   // Chord prefix for multi-key bindings (e.g. C-c → prefix for C-c d).
   String? _chordPrefix;
+
+  // Internal scroll controller so _nudgeScroll can jump to cursor.
+  final _scrollCtrl = ScrollController();
+
+  // GlobalKey on the TextField so _nudgeScroll can find the nearest
+  // Scrollable ancestor and ensure the cursor is visible.
+  final _fieldKey = GlobalKey();
 
   // Cleanup callback returned by attachPrimarySelection.
   late VoidCallback _removePrimary;
@@ -141,6 +154,7 @@ class _EmacsTextFieldState extends State<EmacsTextField> {
   @override
   void dispose() {
     _removePrimary();
+    _scrollCtrl.dispose();
     super.dispose();
   }
 
@@ -260,6 +274,48 @@ class _EmacsTextFieldState extends State<EmacsTextField> {
     );
   }
 
+  /// Scrolls the outer [SingleChildScrollView] to keep the cursor visible
+  /// after an operation that moves it downward (newline insertion, yank, etc.).
+  void _nudgeScroll() {
+    final outer = widget.outerScrollController;
+    if (outer == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !outer.hasClients) return;
+      final renderBox =
+          _fieldKey.currentContext?.findRenderObject() as RenderBox?;
+      if (renderBox == null) return;
+      final style =
+          widget.style ?? DefaultTextStyle.of(_fieldKey.currentContext!).style;
+      final painter = TextPainter(
+        text: TextSpan(text: _ctrl.text, style: style),
+        textDirection: TextDirection.ltr,
+      )..layout(maxWidth: renderBox.size.width);
+      final cursorOffset = _ctrl.selection.baseOffset.clamp(
+        0,
+        _ctrl.text.length,
+      );
+      final caretDy = painter
+          .getOffsetForCaret(TextPosition(offset: cursorOffset), Rect.zero)
+          .dy;
+      final lineH = painter.preferredLineHeight;
+      painter.dispose();
+      // fieldTop is the field's Y offset within the scroll view.
+      final fieldTop =
+          renderBox.localToGlobal(Offset.zero).dy - outer.position.pixels;
+      final cursorY = fieldTop + caretDy;
+      final pos = outer.position;
+      final visibleBottom = pos.pixels + pos.viewportDimension;
+      if (cursorY + lineH > visibleBottom) {
+        outer.jumpTo(
+          (pos.pixels + (cursorY + lineH - visibleBottom)).clamp(
+            0.0,
+            pos.maxScrollExtent,
+          ),
+        );
+      }
+    });
+  }
+
   /// Reads from the X11 primary selection buffer (via xclip or xsel) and
   /// inserts the text at the current cursor position.
   Future<void> _pasteFromPrimary() async {
@@ -294,6 +350,7 @@ class _EmacsTextFieldState extends State<EmacsTextField> {
       text: _ctrl.text.replaceRange(start, end, text),
       selection: TextSelection.collapsed(offset: start + text.length),
     );
+    _nudgeScroll();
   }
 
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
@@ -376,6 +433,7 @@ class _EmacsTextFieldState extends State<EmacsTextField> {
             text: _ctrl.text.replaceRange(o, o, _killRing),
             selection: TextSelection.collapsed(offset: o + _killRing.length),
           );
+          _nudgeScroll();
           return KeyEventResult.handled;
 
         case LogicalKeyboardKey.keyW:
@@ -431,6 +489,7 @@ class _EmacsTextFieldState extends State<EmacsTextField> {
             text: _ctrl.text.replaceRange(o, o, insertion),
             selection: TextSelection.collapsed(offset: o + insertion.length),
           );
+          _nudgeScroll();
           return KeyEventResult.handled;
 
         default:
@@ -448,8 +507,10 @@ class _EmacsTextFieldState extends State<EmacsTextField> {
     return Focus(
       onKeyEvent: _onKey,
       child: TextField(
+        key: _fieldKey,
         controller: _ctrl,
         focusNode: widget.focusNode,
+        scrollController: _scrollCtrl,
         decoration: widget.decoration,
         style: widget.style,
         autofocus: widget.autofocus,
