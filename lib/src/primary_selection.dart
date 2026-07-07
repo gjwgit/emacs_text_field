@@ -10,16 +10,19 @@ library;
 
 import 'dart:io' show Platform, Process;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart' show TextEditingController, VoidCallback;
 
 /// Attaches a listener to [controller] that writes any non-collapsed
 /// selection to the X11 primary buffer on Linux, enabling middle-click
 /// paste into other applications.
 ///
-/// Uses `xclip` (preferred) or `xsel`. No-op on non-Linux platforms.
-/// Returns a cleanup callback — call it in [State.dispose].
+/// Uses `xclip` (preferred) or `xsel`. No-op on the web and on non-Linux
+/// platforms. Returns a cleanup callback — call it in [State.dispose].
 VoidCallback attachPrimarySelection(TextEditingController controller) {
-  if (!Platform.isLinux) return () {};
+  // On the web dart:io's Platform is unsupported and even reading
+  // Platform.isLinux throws, so short-circuit before touching it.
+  if (kIsWeb || !Platform.isLinux) return () {};
 
   void listener() {
     final sel = controller.selection;
@@ -38,9 +41,10 @@ VoidCallback attachPrimarySelection(TextEditingController controller) {
 /// Useful for [SelectionArea] `onSelectionChanged` callbacks where there
 /// is no [TextEditingController] to attach to.
 ///
-/// Uses `xclip` (preferred) or `xsel`. No-op on non-Linux platforms.
+/// Uses `xclip` (preferred) or `xsel`. No-op on the web and on non-Linux
+/// platforms.
 Future<void> writePrimarySelection(String text) async {
-  if (!Platform.isLinux || text.isEmpty) return;
+  if (kIsWeb || !Platform.isLinux || text.isEmpty) return;
 
   try {
     final xclip = await Process.start('xclip', ['-selection', 'primary']);

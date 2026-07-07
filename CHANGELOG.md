@@ -13,11 +13,9 @@ The package is available from
 Coding documentation is available from [solid community
 au](https://solidcommunity.au/docs/solidui)
 
-## 0.2.0 Stabilize
+## 0.1 Initial Release
 
++ Guard Platform calls against web deployment [0.1.3 20260707 gjw]
 + Scrolling fixes within widget [0.1.2 20260515 gjw]
 + Support primary seleciton on Linux [0.1.1 20260514 gjw]
-
-## 0.1.0 Initial release
-
 + Initial release to [pub.dev](https://pub.dev) [0.1.0 20260501 gjw]

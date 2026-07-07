@@ -1,6 +1,6 @@
 name: emacs_text_field
 description: A Flutter TextField widget with common Emacs key bindings.
-version: 0.1.2
+version: 0.1.3
 homepage: https://github.com/gjwgit/emacs_text_field
 
 environment:

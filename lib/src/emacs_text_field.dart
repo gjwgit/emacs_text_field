@@ -44,6 +44,7 @@ library;
 
 import 'dart:io' show Platform, Process, ProcessResult;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -443,9 +444,10 @@ class _EmacsTextFieldState extends State<EmacsTextField> {
         case LogicalKeyboardKey.keyV:
           // On Linux, Ctrl-V pastes from the X11 primary selection buffer
           // (i.e. whatever is currently highlighted anywhere on screen),
-          // rather than the system clipboard. On other platforms fall through
-          // to Flutter's default Ctrl-V behaviour.
-          if (Platform.isLinux) {
+          // rather than the system clipboard. On other platforms (and on the
+          // web, where dart:io Platform is unsupported) fall through to
+          // Flutter's default Ctrl-V behaviour.
+          if (!kIsWeb && Platform.isLinux) {
             _pasteFromPrimary();
             return KeyEventResult.handled;
           }
