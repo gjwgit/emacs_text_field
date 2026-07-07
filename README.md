@@ -63,35 +63,35 @@ Expanded(
 
 ### Movement
 
-| Key | Action |
-|-----|--------|
+| Key   | Action            |
+|-------|-------------------|
 | `C-a` | Beginning of line |
-| `C-e` | End of line |
-| `C-f` | Forward char |
-| `C-b` | Backward char |
-| `C-n` | Next line |
-| `C-p` | Previous line |
-| `M-f` | Forward word |
-| `M-b` | Backward word |
+| `C-e` | End of line       |
+| `C-f` | Forward char      |
+| `C-b` | Backward char     |
+| `C-n` | Next line         |
+| `C-p` | Previous line     |
+| `M-f` | Forward word      |
+| `M-b` | Backward word     |
 
 ### Editing
 
-| Key | Action |
-|-----|--------|
-| `C-d` | Delete char forward |
-| `M-d` | Kill word forward |
-| `M-Backspace` | Kill word backward |
-| `C-k` | Kill to end of line |
-| `C-w` | Kill selection |
-| `C-y` | Yank (paste kill ring) |
-| `M-Enter` | Insert `\n+` (new bullet) |
-| `C-g` | Cancel / deselect |
+| Key           | Action                    |
+|---------------|---------------------------|
+| `C-d`         | Delete char forward       |
+| `M-d`         | Kill word forward         |
+| `M-Backspace` | Kill word backward        |
+| `C-k`         | Kill to end of line       |
+| `C-w`         | Kill selection            |
+| `C-y`         | Yank (paste kill ring)    |
+| `M-Enter`     | Insert `\n+` (new bullet) |
+| `C-g`         | Cancel / deselect         |
 
 ### Chords
 
-| Sequence | Action |
-|----------|--------|
-| `C-c d` | Insert today as `yyyymmdd` |
+| Sequence | Action                     |
+|----------|----------------------------|
+| `C-c d`  | Insert today as `yyyymmdd` |
 
 ### Undo
 
