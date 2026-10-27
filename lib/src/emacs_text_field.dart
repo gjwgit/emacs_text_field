@@ -39,6 +39,11 @@
 ///
 /// ### Undo
 /// `C-z` and `C-/` are passed through to Flutter's built-in undo handler.
+///
+/// ### Spell check
+/// Misspelled words are underlined: through `aspell` on Linux and the native
+/// checker on Android and iOS. Right-click a word for suggestions. Off on the
+/// web and on platforms with no checker.
 
 library;
 
@@ -48,7 +53,9 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:emacs_text_field/src/aspell_spell_check_service.dart';
 import 'package:emacs_text_field/src/primary_selection.dart';
+import 'package:emacs_text_field/src/spell_check.dart';
 
 /// A multiline [TextField] with Emacs-style key bindings.
 ///
@@ -135,12 +142,19 @@ class _EmacsTextFieldState extends State<EmacsTextField> {
   // Cleanup callback returned by attachPrimarySelection.
   late VoidCallback _removePrimary;
 
+  // 20261028 gjw Built once: a new service each build would make the
+  // EditableText see a changed configuration and re-check every frame.
+
+  final _spellCheck = platformSpellCheckConfiguration();
+
   TextEditingController get _ctrl => widget.controller;
 
   @override
   void initState() {
     super.initState();
     _removePrimary = attachPrimarySelection(_ctrl);
+    _ctrl.addListener(_recheckSpelling);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _recheckSpelling());
   }
 
   @override
@@ -149,14 +163,30 @@ class _EmacsTextFieldState extends State<EmacsTextField> {
     if (oldWidget.controller != widget.controller) {
       _removePrimary();
       _removePrimary = attachPrimarySelection(widget.controller);
+      oldWidget.controller.removeListener(_recheckSpelling);
+      widget.controller.addListener(_recheckSpelling);
     }
   }
 
   @override
   void dispose() {
     _removePrimary();
+    _ctrl.removeListener(_recheckSpelling);
     _scrollCtrl.dispose();
     super.dispose();
+  }
+
+  void _recheckSpelling() {
+    final config = _spellCheck;
+    if (config == null || !mounted) return;
+    recheckSpelling(context, _fieldKey, config).then(_rebuildIf);
+  }
+
+  void _addWord(String word) =>
+      addToDictionary(_fieldKey, _spellCheck!, word).then(_rebuildIf);
+
+  void _rebuildIf(bool changed) {
+    if (changed && mounted) setState(() {});
   }
 
   // ── Cursor helpers ─────────────────────────────────────────────────────────
@@ -522,6 +552,16 @@ class _EmacsTextFieldState extends State<EmacsTextField> {
         keyboardType: TextInputType.multiline,
         textCapitalization: TextCapitalization.sentences,
         textAlignVertical: TextAlignVertical.top,
+        spellCheckConfiguration: _spellCheck,
+        contextMenuBuilder: (context, editable) => spellCheckContextMenuBuilder(
+          context,
+          editable,
+          // 20261028 gjw Only aspell has a personal dictionary to add to.
+
+          onAddWord: _spellCheck?.spellCheckService is AspellSpellCheckService
+              ? _addWord
+              : null,
+        ),
       ),
     );
   }

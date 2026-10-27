@@ -26,15 +26,33 @@ test -f lib/main.dart && IS_APP=true
 
 SCRIPTS=${HOME}/projects/scripts/
 FILES=(
+    ${SCRIPTS}github/ISSUE_TEMPLATE/bug_report.md .github/ISSUE_TEMPLATE/bug_report.md
+    ${SCRIPTS}github/ISSUE_TEMPLATE/feature_request.md .github/ISSUE_TEMPLATE/feature_request.md
     ${SCRIPTS}support/loc.sh support/loc.sh
     ${SCRIPTS}support/meld_zip_from_claude.sh support/meld_zip_from_claude.sh
     ${SCRIPTS}support/flutter.mk support/flutter.mk
     ${SCRIPTS}support/update.sh support/update.sh
     ${SCRIPTS}flutter/.gitignore .gitignore
     ${SCRIPTS}flutter/.lycheeignore .lycheeignore
-    ${SCRIPTS}flutter/CLAUDE.md CLAUDE.md
+    ${SCRIPTS}flutter/dart_dependency_validator.yaml dart_dependency_validator.yaml
     ${SCRIPTS}Makefile Makefile
 )
+
+# 20260911 gjw The android build configuration is app independent: the
+# app name only appears in android/app/build.gradle.kts (namespace,
+# applicationId) which stays local. Sharing these keeps the gradle,
+# AGP, and kotlin versions in step across all apps, which is what
+# flutter's build dependency validation warns about. Only add them
+# when the app builds for android.
+
+if [ -d android ]; then
+    FILES+=(
+	${SCRIPTS}flutter/android/build.gradle.kts android/build.gradle.kts
+	${SCRIPTS}flutter/android/settings.gradle.kts android/settings.gradle.kts
+	${SCRIPTS}flutter/android/gradle.properties android/gradle.properties
+	${SCRIPTS}flutter/android/gradle/wrapper/gradle-wrapper.properties android/gradle/wrapper/gradle-wrapper.properties
+    )
+fi
 
 length=${#FILES[@]}
 
@@ -70,12 +88,13 @@ for ((i=0; i < length; i+=2)); do
 
 	continue
 
-	# 20260217 gjw For license.dart do not consider the first line
-	# in the comparison nor the 5th line which might be Copyright
-	# SII or Togaware.
+	# 20260217 gjw For license.dart do not consider the first
+	# DESCRIPTION line in the comparison, the 5th line which is
+	# usually the COPYRIGHT SII or Togaware, nor the 24th line
+	# which is the AUTHORS.
 
 	if [[ "$f1" == "license.dart" ]]; then
-	    if diff <(sed '1d;5d' "$f1") <(sed '1d;5d' "$f2") >/dev/null; then
+	    if diff <(sed '1d;5d;24d' "$f1") <(sed '1d;5d;24d' "$f2") >/dev/null; then
 		echo "IDENTICAL $f1 $f2"
 	    else
 		echo "MELD      $f1 $f2"
@@ -91,42 +110,6 @@ for ((i=0; i < length; i+=2)); do
 
 	elif [[ "$f1" == "Makefile" ]]; then
 	    if diff <(grep -v '^REPO=' "$f1" | grep -v '^RLOC=' | grep -v '^DWLD=') <(grep -v '^REPO=' "$f2" | grep -v '^RLOC=' | grep -v '^DWLD=') >/dev/null; then
-		echo "IDENTICAL $f1 $f2"
-	    else
-		echo "MELD      $f1 $f2"
-		meld "$f1" "$f2" 2> /dev/null
-	    fi
-
-	# 20260415 gjw Now deal with the APPs that require installers
-	# rather than the PKGS which don't.
-
-	# 20260324 gjw For the deb installers script we expect the
-	# Name= and Comment= to differ so ignore those lines.
-
-	elif [[ "$f1" == "installers/deb.sh" ]] && $IS_APP; then
-	    if diff <(grep -v '^Name=' "$f1" | grep -v '^Comment=' | sed '/^Description: /,/^EOL$/d') <(grep -v '^Name=' "$f2" | grep -v '^Comment=' | sed '/^Description: /,/^EOL$/d') >/dev/null; then
-		echo "IDENTICAL $f1 $f2"
-	    else
-		echo "MELD      $f1 $f2"
-		meld "$f1" "$f2" 2> /dev/null
-	    fi
-
-        # 20260306 gjw For the installers uploader we expect the HOST
-	# and FLDR to differ so ignore those lines.
-
-	elif [[ "$f1" == "installers/update.sh" ]] && $IS_APP; then
-	    if diff <(grep -v '^HOST=' "$f1" | grep -v '^FLDR=') <(grep -v '^HOST=' "$f2" | grep -v '^FLDR=') >/dev/null; then
-		echo "IDENTICAL $f1 $f2"
-	    else
-		echo "MELD      $f1 $f2"
-		meld "$f1" "$f2" 2> /dev/null
-	    fi
-
-	# 20260220 gjw For the installers workflow we expect the APP
-	# and LINUX_PKGS to differ so ignore those lines.
-
-	elif [[ "$f1" == ".github/workflows/installers.yaml" ]] && $IS_APP; then
-	    if diff <(grep -v '^  APP:' "$f1" | grep -v '^  LINUX_PKGS:') <(grep -v '^  APP:' "$f2" | grep -v '^  LINUX_PKGS:') >/dev/null; then
 		echo "IDENTICAL $f1 $f2"
 	    else
 		echo "MELD      $f1 $f2"
@@ -196,7 +179,7 @@ for ((i=0; i < length; i+=2)); do
 	# SII or Togaware.
 
 	if [[ "$f1" == "license.dart" ]]; then
-	    if diff <(sed '1d;5d' "$f1") <(sed '1d;5d' "$f2") >/dev/null; then
+	    if diff <(sed '1d;5d;24d' "$f1") <(sed '1d;5d;24d' "$f2") >/dev/null; then
 		echo "IDENTICAL $f1 $f2"
 	    else
 		echo "MELD      $f2 $f1"
@@ -225,7 +208,7 @@ for ((i=0; i < length; i+=2)); do
 	# Name= and Comment= to differ so ignore those lines.
 
 	elif [[ "$f1" == "installers/deb.sh" ]] && $IS_APP; then
-	    if diff <(grep -v '^Name=' "$f1" | grep -v '^Comment=' | sed '/^Description: /,/^EOL$/d') <(grep -v '^Name=' "$f2" | grep -v '^Comment=' | sed '/^Description: /,/^EOL$/d') >/dev/null; then
+	    if diff <(grep -v '^Name=' "$f1" | grep -v '^Comment=' | grep -v '^Section:' | grep -v '^Depends:' | sed '/^Description: /,/^EOL$/d') <(grep -v '^Name=' "$f2" | grep -v '^Comment=' | grep -v '^Section:' | grep -v '^Depends:' | sed '/^Description: /,/^EOL$/d') >/dev/null; then
 		echo "IDENTICAL $f1 $f2"
 	    else
 		echo "MELD      $f2 $f1"

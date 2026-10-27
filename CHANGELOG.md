@@ -13,6 +13,10 @@ The package is available from
 Coding documentation is available from [solid community
 au](https://solidcommunity.au/docs/solidui)
 
+## 1.0 Stable Release
+
++ Spell check with suggestions/add. Use aspell on Linux [1.0.0 20261028 gjw]
+
 ## 0.1 Initial Release
 
 + Guard Platform calls against web deployment [0.1.3 20260707 gjw]
